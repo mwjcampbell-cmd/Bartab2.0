@@ -22,6 +22,10 @@ function getStore(mode = "readonly") {
 }
 
 // --- Customer Functions ---
+function serverName() {
+  return document.getElementById("serverName").value.trim() || "Unknown";
+}
+
 async function addCustomer() {
   const name = document.getElementById("newName").value.trim();
   if (!name) return;
@@ -34,9 +38,9 @@ async function addPending(cid, price, title) {
   const tx = db.transaction("customers", "readwrite");
   const store = tx.objectStore("customers");
   const req = store.get(cid);
-  req.onsuccess = async () => {
+  req.onsuccess = () => {
     const c = req.result;
-    c.pending.push({ title, price, qty: 1, date: new Date().toLocaleString() });
+    c.pending.push({ title, price, qty: 1, date: new Date().toLocaleString(), server: serverName() });
     store.put(c).onsuccess = render;
   };
 }
@@ -50,7 +54,7 @@ async function addCustomPurchase(cid) {
   const req = store.get(cid);
   req.onsuccess = () => {
     const c = req.result;
-    c.pending.push({ title: "Custom", price, qty, date: new Date().toLocaleString() });
+    c.pending.push({ title: "Custom", price, qty, date: new Date().toLocaleString(), server: serverName() });
     store.put(c).onsuccess = render;
   };
 }
@@ -63,7 +67,7 @@ async function addPayment(cid) {
   const req = store.get(cid);
   req.onsuccess = () => {
     const c = req.result;
-    c.payments.push({ amount, date: new Date().toLocaleString() });
+    c.payments.push({ amount, date: new Date().toLocaleString(), server: serverName() });
     store.put(c).onsuccess = render;
   };
 }
@@ -124,19 +128,19 @@ async function render() {
       if (c.name.toLowerCase().includes(search)) {
         const bal = balance(c);
         const balClass = bal < 0 ? "credit" : (bal > 0 ? "debt" : "");
+
         let pendingList = c.pending.map((p, i) =>
-          `<li>${p.title} ×${p.qty} — $${subtotal(p).toFixed(2)}
-            <small>(${p.date})</small>
+          `<li>${p.title} ×${p.qty} — $${subtotal(p).toFixed(2)} <small>(${p.date}, ${p.server})</small>
             <button onclick="confirmPending(${c.id},${i})">✔️</button>
             <button onclick="cancelPending(${c.id},${i})">❌</button>
           </li>`).join("") || "<li>None</li>";
 
         let purchaseList = c.purchases.map(p =>
-          `<li>${p.title} ×${p.qty} — $${subtotal(p).toFixed(2)} <small>(${p.date})</small></li>`
+          `<li>${p.title} ×${p.qty} — $${subtotal(p).toFixed(2)} <small>(${p.date}, ${p.server})</small></li>`
         ).join("") || "<li>None</li>";
 
         let paymentList = c.payments.map(p =>
-          `<li>Payment — $${p.amount.toFixed(2)} <small>(${p.date})</small></li>`
+          `<li>Payment — $${p.amount.toFixed(2)} <small>(${p.date}, ${p.server})</small></li>`
         ).join("") || "<li>None</li>";
 
         const div = document.createElement("div");
@@ -144,9 +148,11 @@ async function render() {
         div.innerHTML = `
           <div><strong>${c.name}</strong></div>
           <div class="balance ${balClass}">Balance: $${bal.toFixed(2)}</div>
+
           <h4>Pending Orders</h4>
           <ul>${pendingList}</ul>
           ${c.pending.length ? `<button onclick="confirmPending(${c.id})">✔️ Confirm All Pending</button>` : ""}
+
           <div>
             <button onclick="addPending(${c.id},4,'Beer')">🍺 Beer $4</button>
             <button onclick="addPending(${c.id},5,'RTD')">🥤 RTD $5</button>
@@ -154,9 +160,8 @@ async function render() {
             <button onclick="addCustomPurchase(${c.id})">➕ Custom</button>
             <button onclick="addPayment(${c.id})">💵 Payment</button>
           </div>
-          <div>
-            <button onclick="confirmPending(${c.id})">✔️ Confirm All</button>
-          </div>
+
+          <button onclick="toggleStatement(${c.id})">📄 Statement</button>
           <div class="statement" id="st${c.id}" style="display:none;">
             <h3>Purchases</h3><ul>${purchaseList}</ul>
             <h3>Payments</h3><ul>${paymentList}</ul>
@@ -191,6 +196,23 @@ function printStatement() {
   win.document.write(`<html><head><title>Print</title></head><body>${content}</body></html>`);
   win.document.close();
   win.print();
+}
+
+// --- Update Check ---
+async function checkForUpdates() {
+  try {
+    const res = await fetch("version.json?v=" + Date.now());
+    if (!res.ok) throw new Error("Unable to fetch version");
+    const json = await res.json();
+    if (json.version !== localStorage.getItem("appVersion")) {
+      alert("New version available! Please refresh to update.");
+      localStorage.setItem("appVersion", json.version);
+    } else {
+      alert("App is up to date.");
+    }
+  } catch (e) {
+    alert("Update check failed: " + e.message);
+  }
 }
 
 // --- Initialize ---
