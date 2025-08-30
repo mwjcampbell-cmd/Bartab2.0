@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
   <h1>📒 Bar Tabs (PWA)</h1>
@@ -15,7 +14,6 @@
     <input id="newName" placeholder="Customer name">
     <button onclick="addCustomer()">➕ Add Customer</button>
     <button onclick="clearAllDB()">🧹 Clear ALL Balances</button>
-    <button onclick="deleteAllDB()">⚠️ Delete ALL Data</button>
     <br><br>
     <input id="serverName" placeholder="Service person name">
     <button onclick="showAllStatements()">📑 All Accounts Statement</button>
@@ -23,7 +21,6 @@
     <input id="searchBox" placeholder="🔍 Search customers..." oninput="render()">
     <br><br>
     <button onclick="printStatement()">🖨️ Print / Export PDF</button>
-    <button onclick="exportPDF()">📄 Export PDF</button>
   </div>
 
   <div id="customers"></div>
