@@ -12,15 +12,15 @@
 
   <div class="top-buttons">
     <input id="newName" placeholder="Customer name">
-    <button onclick="addCustomer()">➕ Add Customer</button>
-    <button onclick="clearAllDB()">🧹 Clear ALL Balances</button>
+    <button id="addCustomerBtn">➕ Add Customer</button>
+    <button id="clearAllBtn">🧹 Clear ALL Balances</button>
     <br><br>
     <input id="serverName" placeholder="Service person name">
-    <button onclick="showAllStatements()">📑 All Accounts Statement</button>
+    <button id="showAllBtn">📑 All Accounts Statement</button>
     <br><br>
     <input id="searchBox" placeholder="🔍 Search customers..." oninput="render()">
     <br><br>
-    <button onclick="printStatement()">🖨️ Print</button>
+    <button id="printBtn">🖨️ Print</button>
   </div>
 
   <div id="customers"></div>
