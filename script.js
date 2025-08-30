@@ -122,10 +122,7 @@ function toggleStatement(id) {
 
 function showAllStatements() {
   const statements = document.querySelectorAll(".statement");
-  const allVisible = Array.from(statements).every(s => s.style.display === "block");
-  statements.forEach(s => s.style.display = allVisible ? "none" : "block");
-  document.querySelector('button[onclick="showAllStatements()"]').innerText =
-    allVisible ? "📄 Show All" : "📄 Hide All";
+  statements.forEach(s => s.style.display = "block");
 }
 
 // --- Print ---
@@ -137,17 +134,8 @@ function printStatement() {
   win.print();
 }
 
-// --- Dark Mode ---
-function toggleDarkMode() {
-  document.body.classList.toggle("dark-mode");
-  localStorage.setItem("darkMode", document.body.classList.contains("dark-mode"));
-}
-
 // --- Init ---
 window.onload = async () => {
   await openDB();
-  if (localStorage.getItem("darkMode") === "true") {
-    document.body.classList.add("dark-mode");
-  }
   render();
 };
