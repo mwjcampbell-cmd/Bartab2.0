@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
   <h1>📒 Bar Tabs (PWA)</h1>
@@ -20,6 +21,9 @@
     <button onclick="showAllStatements()">📑 All Accounts Statement</button>
     <br><br>
     <input id="searchBox" placeholder="🔍 Search customers..." oninput="render()">
+    <br><br>
+    <button onclick="printStatement()">🖨️ Print / Export PDF</button>
+    <button onclick="exportPDF()">📄 Export PDF</button>
   </div>
 
   <div id="customers"></div>
