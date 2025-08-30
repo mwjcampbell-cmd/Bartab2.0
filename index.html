@@ -5,36 +5,92 @@
   <title>🍻 Bar Tab Manager</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .customer { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
-    .balance { font-weight: bold; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #222;
+    }
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    input, button {
+      padding: 8px 12px;
+      font-size: 14px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      cursor: pointer;
+      background: #007bff;
+      color: #fff;
+      border: none;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .customer {
+      background: #fff;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 10px auto;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      max-width: 600px;
+    }
+    .customer strong {
+      font-size: 18px;
+      color: #111;
+    }
+    .balance {
+      font-weight: bold;
+      margin-top: 5px;
+    }
     .credit { color: green; }
     .debt { color: red; }
-    .statement { display: none; margin-top: 10px; }
-    button { margin: 2px; }
+    .statement {
+      display: none;
+      margin-top: 10px;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+      font-size: 14px;
+    }
+    .statement h3 {
+      margin: 5px 0;
+      font-size: 15px;
+    }
+    ul {
+      padding-left: 18px;
+      margin: 4px 0;
+    }
+    .customer button {
+      margin: 2px;
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
   <h1>🍻 Bar Tab Manager</h1>
 
-  <!-- Server Name -->
-  <label>Server: 
-    <input id="serverName" placeholder="Enter your name">
-  </label>
-  <br><br>
-
-  <!-- Add Customer -->
-  <input id="newName" placeholder="New Customer Name">
-  <button onclick="addCustomer()">➕ Add Customer</button>
-  <br><br>
-
-  <!-- Search -->
-  <input id="searchBox" placeholder="Search" oninput="render()">
-
-  <!-- Global Actions -->
-  <button onclick="showAllStatements()">📄 Show All</button>
-  <button onclick="clearAllDB()">🧹 Clear All</button>
-  <button onclick="printStatement()">🖨️ Print</button>
+  <div class="top-bar">
+    <label>Server: 
+      <input id="serverName" placeholder="Enter your name">
+    </label>
+    <input id="newName" placeholder="New Customer Name">
+    <button onclick="addCustomer()">➕ Add Customer</button>
+    <input id="searchBox" placeholder="Search" oninput="render()">
+    <button onclick="showAllStatements()">📄 Show All</button>
+    <button onclick="clearAllDB()">🧹 Clear All</button>
+    <button onclick="printStatement()">🖨️ Print</button>
+  </div>
 
   <div id="customers"></div>
 
