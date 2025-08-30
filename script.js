@@ -45,11 +45,14 @@ async function deleteCustomerDB(id) {
 }
 
 async function clearAllDB() {
-  return new Promise(resolve => {
-    const tx = getStore('customers', 'readwrite');
-    tx.clear();
-    tx.transaction.oncomplete = () => resolve();
-  });
+  const customers = await getAllCustomers();
+  for (let c of customers) {
+    c.purchases = [];
+    c.payments = [];
+    c.pending = [];
+    await saveCustomer(c);
+  }
+  render();
 }
 
 // Utilities
@@ -243,4 +246,9 @@ function printStatement(){
 window.onload = async ()=>{
   await openDB();
   render();
+
+  document.getElementById('addCustomerBtn').addEventListener('click', async()=>{await addCustomer();});
+  document.getElementById('clearAllBtn').addEventListener('click', async()=>{await clearAllDB();});
+  document.getElementById('showAllBtn').addEventListener('click', async()=>{await showAllStatements();});
+  document.getElementById('printBtn').addEventListener('click', printStatement);
 };
