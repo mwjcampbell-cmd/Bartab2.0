@@ -2,29 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Bar Tab</title>
+  <title>🍻 Bar Tab Manager</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
-  <link rel="manifest" href="manifest.json">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .customer { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+    .balance { font-weight: bold; }
+    .credit { color: green; }
+    .debt { color: red; }
+    .statement { display: none; margin-top: 10px; }
+    button { margin: 2px; }
+  </style>
 </head>
 <body>
-  <h1>📒 Bar Tabs</h1>
+  <h1>🍻 Bar Tab Manager</h1>
 
-  <div class="top-buttons">
-    <input id="newName" placeholder="Customer name">
-    <button id="addCustomerBtn">➕ Add Customer</button>
-    <button id="clearAllBtn">🧹 Clear ALL Balances</button>
-    <br><br>
-    <input id="serverName" placeholder="Service person name">
-    <button id="showAllBtn">📑 All Accounts Statement</button>
-    <br><br>
-    <input id="searchBox" placeholder="🔍 Search customers...">
-    <br><br>
-    <button id="printBtn">🖨️ Print</button>
-  </div>
+  <!-- Server Name -->
+  <label>Server: 
+    <input id="serverName" placeholder="Enter your name">
+  </label>
+  <br><br>
+
+  <!-- Add Customer -->
+  <input id="newName" placeholder="New Customer Name">
+  <button onclick="addCustomer()">➕ Add Customer</button>
+  <br><br>
+
+  <!-- Search -->
+  <input id="searchBox" placeholder="Search" oninput="render()">
+
+  <!-- Global Actions -->
+  <button onclick="showAllStatements()">📄 Show All</button>
+  <button onclick="clearAllDB()">🧹 Clear All</button>
+  <button onclick="printStatement()">🖨️ Print</button>
 
   <div id="customers"></div>
-  <div id="allStatements" style="display:none; margin-top:2em;"></div>
 
   <script src="script.js"></script>
 </body>
