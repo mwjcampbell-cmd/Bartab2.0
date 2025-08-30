@@ -1,0 +1,42 @@
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  padding: 1em;
+  background: #111;
+  color: #f8f8f8;
+}
+h1 { text-align: center; }
+.top-buttons { text-align:center; margin:1em 0; }
+.customer {
+  background: #222;
+  border: 1px solid #333;
+  padding: 1em;
+  margin: 1em 0;
+  border-radius: 10px;
+}
+.balance { font-weight: bold; font-size: 1.1em; margin: 0.5em 0; }
+.credit { color: #4caf50; }
+.debt { color: #f44336; }
+button {
+  margin: 0.2em;
+  padding: 0.5em 0.8em;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.statement {
+  margin-top: 0.8em;
+  padding: 0.8em;
+  font-size: 0.9em;
+  background: #111;
+  border-radius: 6px;
+  display: none;
+  border: 1px solid #444;
+}
+ul { padding-left: 1.2em; }
+input {
+  margin: 0.2em;
+  padding: 0.5em;
+  border-radius: 5px;
+  border: 1px solid #444;
+  background: #000;
+  color: #fff;
+}

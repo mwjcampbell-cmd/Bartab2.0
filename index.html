@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bar Tab PWA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <h1>📒 Bar Tabs (PWA)</h1>
+
+  <div class="top-buttons">
+    <input id="newName" placeholder="Customer name">
+    <button onclick="addCustomer()">➕ Add Customer</button>
+    <button onclick="clearAllDB()">🧹 Clear ALL Balances</button>
+    <button onclick="deleteAllDB()">⚠️ Delete ALL Data</button>
+    <br><br>
+    <input id="serverName" placeholder="Service person name">
+    <button onclick="showAllStatements()">📑 All Accounts Statement</button>
+    <br><br>
+    <input id="searchBox" placeholder="🔍 Search customers..." oninput="render()">
+  </div>
+
+  <div id="customers"></div>
+  <div id="allStatements" style="display:none; margin-top:2em;"></div>
+
+  <script src="script.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log('Service Worker Registered'))
+        .catch(err => console.error('Service Worker Failed', err));
+    }
+  </script>
+</body>
+</html>
