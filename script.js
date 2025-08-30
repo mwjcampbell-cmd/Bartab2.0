@@ -237,4 +237,20 @@ function printStatement(){
       h1{text-align:center;}
       .customer{border:1px solid #444;margin:1em 0;padding:1em;border-radius:6px;}
     </style></head><body>
-    <h1>📒 Bar Tabs</h1>${all
+    <h1>📒 Bar Tabs</h1>${allContent}</body></html>`);
+  win.document.close();
+  win.print();
+}
+
+// Initialize
+window.onload = async ()=>{
+  await openDB();
+  render();
+
+  document.getElementById('addCustomerBtn').addEventListener('click', async()=>{await addCustomer();});
+  document.getElementById('clearAllBtn').addEventListener('click', async()=>{await clearAllDB();});
+  document.getElementById('showAllBtn').addEventListener('click', async()=>{await showAllStatements();});
+  document.getElementById('printBtn').addEventListener('click', printStatement);
+
+  document.getElementById('searchBox').addEventListener('input', render);
+};
