@@ -1,5 +1,15 @@
-const CACHE_NAME='bartab-cache-v1';
-const urlsToCache=['./index.html','./style.css','./script.js','./manifest.json'];
+const CACHE_NAME = 'bar-tab-cache-v1';
+const urlsToCache = ['./', './index.html', './style.css', './script.js', './manifest.json'];
 
-self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(urlsToCache)));});
-self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+  );
+});
+
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(resp => resp || fetch(event.request))
+  );
+});
