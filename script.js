@@ -1,7 +1,7 @@
 let db;
 
 // IndexedDB setup
-function openDB() {
+async function openDB() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('BarTabDB', 1);
     request.onerror = () => reject('DB error');
@@ -15,11 +15,11 @@ function openDB() {
   });
 }
 
-// CRUD helpers
 function getStore(storeName, mode='readonly') {
   return db.transaction(storeName, mode).objectStore(storeName);
 }
 
+// CRUD Helpers
 async function saveCustomer(cust) {
   return new Promise(resolve => {
     const tx = getStore('customers', 'readwrite');
@@ -63,10 +63,10 @@ function totalPurchases(c) { return c.purchases.reduce((sum,p)=>sum+subtotal(p),
 function totalPayments(c) { return c.payments.reduce((sum,p)=>sum+p.amount,0); }
 function balance(c) { return totalPurchases(c) - totalPayments(c); }
 
-// Customer CRUD
+// Customer Functions
 async function addCustomer() {
   const name = document.getElementById('newName').value.trim();
-  if (!name) return;
+  if (!name) return alert("Enter a name!");
   const id = 'c' + Date.now();
   const cust = {id, name, purchases:[], payments:[], pending:[]};
   await saveCustomer(cust);
@@ -237,18 +237,4 @@ function printStatement(){
       h1{text-align:center;}
       .customer{border:1px solid #444;margin:1em 0;padding:1em;border-radius:6px;}
     </style></head><body>
-    <h1>📒 Bar Tabs</h1>${allContent}</body></html>`);
-  win.document.close();
-  win.print();
-}
-
-// Initialize
-window.onload = async ()=>{
-  await openDB();
-  render();
-
-  document.getElementById('addCustomerBtn').addEventListener('click', async()=>{await addCustomer();});
-  document.getElementById('clearAllBtn').addEventListener('click', async()=>{await clearAllDB();});
-  document.getElementById('showAllBtn').addEventListener('click', async()=>{await showAllStatements();});
-  document.getElementById('printBtn').addEventListener('click', printStatement);
-};
+    <h1>📒 Bar Tabs</h1>${all
