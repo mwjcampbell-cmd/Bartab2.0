@@ -56,13 +56,11 @@ async function clearAllDB() {
 function now() { return new Date().toLocaleString(); }
 function server() { return document.getElementById("serverName").value.trim() || "Unknown"; }
 function subtotal(p) { return p.price * (p.qty || 1); }
-
-// Balance calculations
 function totalPurchases(c) { return c.purchases.reduce((sum,p)=>sum+subtotal(p),0); }
 function totalPayments(c) { return c.payments.reduce((sum,p)=>sum+p.amount,0); }
 function balance(c) { return totalPurchases(c) - totalPayments(c); }
 
-// CRUD & Button Functions
+// Customer CRUD
 async function addCustomer() {
   const name = document.getElementById('newName').value.trim();
   if (!name) return;
@@ -160,7 +158,7 @@ function toggleStatement(id){
 async function showAllStatements(){
   const div = document.getElementById('allStatements');
   div.style.display = div.style.display==='none'?'block':'none';
-  if (div.style.display==='none') return;
+  if(div.style.display==='none') return;
   div.innerHTML = "<h2>📑 All Accounts Statement</h2>";
   const customers = await getAllCustomers();
   customers.forEach(c=>{
@@ -232,4 +230,17 @@ function printStatement(){
   win.document.write(`
     <html><head><title>Bar Tab Statement</title>
     <style>
-      body{font-family:Arial,sans-serif;padding:1em;background:#fff;color:#000
+      body{font-family:Arial,sans-serif;padding:1em;background:#fff;color:#000;}
+      h1{text-align:center;}
+      .customer{border:1px solid #444;margin:1em 0;padding:1em;border-radius:6px;}
+    </style></head><body>
+    <h1>📒 Bar Tabs</h1>${allContent}</body></html>`);
+  win.document.close();
+  win.print();
+}
+
+// Initialize
+window.onload = async ()=>{
+  await openDB();
+  render();
+};
