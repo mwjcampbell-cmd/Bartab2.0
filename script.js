@@ -25,61 +25,96 @@ function getStore(mode = "readonly") {
 async function addCustomer() {
   const name = document.getElementById("newName").value.trim();
   if (!name) return;
-  const tx = db.transaction("customers", "readwrite");
-  const store = tx.objectStore("customers");
-  await store.add({ name, beers: [], payments: [], pending: [] });
-  await tx.complete;
+  const store = getStore("readwrite");
+  store.add({ name, purchases: [], payments: [], pending: [] }).onsuccess = render;
   document.getElementById("newName").value = "";
-  render();
 }
 
-async function addBeer(id) {
+async function addPending(cid, price, title) {
   const tx = db.transaction("customers", "readwrite");
   const store = tx.objectStore("customers");
-  const customer = await store.get(id);
-  customer.pending.push({ type: "beer", amount: 10, time: new Date().toISOString() });
-  await store.put(customer);
-  render();
+  const req = store.get(cid);
+  req.onsuccess = async () => {
+    const c = req.result;
+    c.pending.push({ title, price, qty: 1, date: new Date().toLocaleString() });
+    store.put(c).onsuccess = render;
+  };
 }
 
-async function addPayment(id) {
-  const amount = parseFloat(prompt("Enter payment amount:", "10"));
+async function addCustomPurchase(cid) {
+  const price = parseFloat(prompt("Price?", "10"));
+  if (isNaN(price)) return;
+  const qty = parseInt(prompt("Quantity?", "1")) || 1;
+  const tx = db.transaction("customers", "readwrite");
+  const store = tx.objectStore("customers");
+  const req = store.get(cid);
+  req.onsuccess = () => {
+    const c = req.result;
+    c.pending.push({ title: "Custom", price, qty, date: new Date().toLocaleString() });
+    store.put(c).onsuccess = render;
+  };
+}
+
+async function addPayment(cid) {
+  const amount = parseFloat(prompt("Payment amount:", "10"));
   if (isNaN(amount) || amount <= 0) return;
   const tx = db.transaction("customers", "readwrite");
   const store = tx.objectStore("customers");
-  const customer = await store.get(id);
-  customer.pending.push({ type: "payment", amount, time: new Date().toISOString() });
-  await store.put(customer);
-  render();
+  const req = store.get(cid);
+  req.onsuccess = () => {
+    const c = req.result;
+    c.payments.push({ amount, date: new Date().toLocaleString() });
+    store.put(c).onsuccess = render;
+  };
 }
 
-async function confirmPending(id) {
+async function confirmPending(cid, index = null) {
   const tx = db.transaction("customers", "readwrite");
   const store = tx.objectStore("customers");
-  const customer = await store.get(id);
-  customer.pending.forEach(p => {
-    if (p.type === "beer") customer.beers.push(p);
-    else customer.payments.push(p);
-  });
-  customer.pending = [];
-  await store.put(customer);
-  render();
+  const req = store.get(cid);
+  req.onsuccess = () => {
+    const c = req.result;
+    if (index !== null) {
+      const order = c.pending.splice(index, 1)[0];
+      c.purchases.push(order);
+    } else {
+      c.purchases.push(...c.pending);
+      c.pending = [];
+    }
+    store.put(c).onsuccess = render;
+  };
+}
+
+async function cancelPending(cid, index) {
+  const tx = db.transaction("customers", "readwrite");
+  const store = tx.objectStore("customers");
+  const req = store.get(cid);
+  req.onsuccess = () => {
+    const c = req.result;
+    c.pending.splice(index, 1);
+    store.put(c).onsuccess = render;
+  };
 }
 
 async function clearAllDB() {
   if (!confirm("Delete all customer data?")) return;
   const tx = db.transaction("customers", "readwrite");
-  tx.objectStore("customers").clear();
-  await tx.complete;
-  render();
+  tx.objectStore("customers").clear().onsuccess = render;
 }
+
+// --- Helper Functions ---
+function subtotal(p) { return p.price * (p.qty || 1); }
+function totalPurchases(c) { return c.purchases.reduce((s, p) => s + subtotal(p), 0); }
+function totalPayments(c) { return c.payments.reduce((s, p) => s + p.amount, 0); }
+function balance(c) { return totalPurchases(c) - totalPayments(c); }
 
 // --- Render Customers ---
 async function render() {
   const customersDiv = document.getElementById("customers");
-  customersDiv.innerHTML = "";
   const search = document.getElementById("searchBox").value.toLowerCase();
+  const scrollY = window.scrollY;
 
+  customersDiv.innerHTML = "";
   const tx = db.transaction("customers", "readonly");
   const store = tx.objectStore("customers");
   store.openCursor().onsuccess = e => {
@@ -87,25 +122,45 @@ async function render() {
     if (cursor) {
       const c = cursor.value;
       if (c.name.toLowerCase().includes(search)) {
-        const balance = c.payments.reduce((s, p) => s + p.amount, 0) - c.beers.length * 10;
+        const bal = balance(c);
+        const balClass = bal < 0 ? "credit" : (bal > 0 ? "debt" : "");
+        let pendingList = c.pending.map((p, i) =>
+          `<li>${p.title} ×${p.qty} — $${subtotal(p).toFixed(2)}
+            <small>(${p.date})</small>
+            <button onclick="confirmPending(${c.id},${i})">✔️</button>
+            <button onclick="cancelPending(${c.id},${i})">❌</button>
+          </li>`).join("") || "<li>None</li>";
+
+        let purchaseList = c.purchases.map(p =>
+          `<li>${p.title} ×${p.qty} — $${subtotal(p).toFixed(2)} <small>(${p.date})</small></li>`
+        ).join("") || "<li>None</li>";
+
+        let paymentList = c.payments.map(p =>
+          `<li>Payment — $${p.amount.toFixed(2)} <small>(${p.date})</small></li>`
+        ).join("") || "<li>None</li>";
+
         const div = document.createElement("div");
         div.className = "customer";
         div.innerHTML = `
-          <strong>${c.name}</strong>
-          <div class="balance ${balance >= 0 ? "credit" : "debt"}">
-            Balance: $${balance}
+          <div><strong>${c.name}</strong></div>
+          <div class="balance ${balClass}">Balance: $${bal.toFixed(2)}</div>
+          <h4>Pending Orders</h4>
+          <ul>${pendingList}</ul>
+          ${c.pending.length ? `<button onclick="confirmPending(${c.id})">✔️ Confirm All Pending</button>` : ""}
+          <div>
+            <button onclick="addPending(${c.id},4,'Beer')">🍺 Beer $4</button>
+            <button onclick="addPending(${c.id},5,'RTD')">🥤 RTD $5</button>
+            <button onclick="addPending(${c.id},2,'Soft Drink')">🧃 Soft $2</button>
+            <button onclick="addCustomPurchase(${c.id})">➕ Custom</button>
+            <button onclick="addPayment(${c.id})">💵 Payment</button>
           </div>
-          <button onclick="addBeer(${c.id})">🍺 Add Beer</button>
-          <button onclick="addPayment(${c.id})">💵 Add Payment</button>
-          <button onclick="confirmPending(${c.id})">✅ Confirm</button>
-          <button onclick="toggleStatement(${c.id})">📑 Statement</button>
-          <div class="statement" id="st${c.id}">
-            <h3>Beers:</h3>
-            <ul>${c.beers.map(b => `<li>$10 - ${new Date(b.time).toLocaleString()}</li>`).join("")}</ul>
-            <h3>Payments:</h3>
-            <ul>${c.payments.map(p => `<li>$${p.amount} - ${new Date(p.time).toLocaleString()}</li>`).join("")}</ul>
-            <h3>Pending:</h3>
-            <ul>${c.pending.map(p => `<li>${p.type} $${p.amount} - ${new Date(p.time).toLocaleString()}</li>`).join("")}</ul>
+          <div>
+            <button onclick="confirmPending(${c.id})">✔️ Confirm All</button>
+          </div>
+          <div class="statement" id="st${c.id}" style="display:none;">
+            <h3>Purchases</h3><ul>${purchaseList}</ul>
+            <h3>Payments</h3><ul>${paymentList}</ul>
+            <strong>Balance: $${bal.toFixed(2)}</strong>
           </div>
         `;
         customersDiv.appendChild(div);
@@ -113,13 +168,17 @@ async function render() {
       cursor.continue();
     }
   };
+
+  window.scrollTo(0, scrollY);
 }
 
+// --- Statement Toggle ---
 function toggleStatement(id) {
   const st = document.getElementById("st" + id);
   st.style.display = st.style.display === "block" ? "none" : "block";
 }
 
+// --- Show All ---
 function showAllStatements() {
   const statements = document.querySelectorAll(".statement");
   statements.forEach(s => s.style.display = "block");
@@ -134,7 +193,7 @@ function printStatement() {
   win.print();
 }
 
-// --- Init ---
+// --- Initialize ---
 window.onload = async () => {
   await openDB();
   render();
