@@ -1,103 +1,86 @@
 let db;
 
-// Open IndexedDB
+// IndexedDB setup
 async function openDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open("BarTabDB", 1);
-    request.onerror = () => reject("DB open error");
-    request.onsuccess = () => { db = request.result; resolve(db); };
-    request.onupgradeneeded = e => {
+  return new Promise((resolve, reject)=>{
+    const request = indexedDB.open("BarTabDB",1);
+    request.onerror = ()=>reject("DB open error");
+    request.onsuccess = ()=>{ db = request.result; resolve(db); };
+    request.onupgradeneeded = e=>{
       db = e.target.result;
-      if (!db.objectStoreNames.contains("customers")) {
-        db.createObjectStore("customers", { keyPath: "id" });
-      }
+      if(!db.objectStoreNames.contains("customers")) db.createObjectStore("customers",{ keyPath:"id" });
     };
   });
 }
 
-// Get Object Store
-function getStore(storeName, mode="readonly") {
-  return db.transaction(storeName, mode).objectStore(storeName);
-}
+function getStore(name,mode="readonly"){ return db.transaction(name,mode).objectStore(name); }
 
-// CRUD helpers
-async function saveCustomer(cust) {
-  return new Promise(resolve => {
-    const tx = getStore("customers", "readwrite");
+async function saveCustomer(cust){
+  return new Promise(resolve=>{
+    const tx = getStore("customers","readwrite");
     tx.put(cust);
-    tx.transaction.oncomplete = () => resolve();
+    tx.transaction.oncomplete = ()=>resolve();
   });
 }
 
-async function getAllCustomers() {
-  return new Promise(resolve => {
+async function getAllCustomers(){
+  return new Promise(resolve=>{
     const tx = getStore("customers");
     const req = tx.getAll();
-    req.onsuccess = () => resolve(req.result);
+    req.onsuccess = ()=>resolve(req.result);
   });
 }
 
-async function deleteCustomerDB(id) {
-  return new Promise(resolve => {
-    const tx = getStore("customers", "readwrite");
+async function deleteCustomerDB(id){
+  return new Promise(resolve=>{
+    const tx = getStore("customers","readwrite");
     tx.delete(id);
-    tx.transaction.oncomplete = () => resolve();
+    tx.transaction.oncomplete = ()=>resolve();
   });
 }
 
-async function clearAllDB() {
+async function clearAllDB(){
   const customers = await getAllCustomers();
-  for (let c of customers) {
-    c.purchases = [];
-    c.payments = [];
-    c.pending = [];
-    await saveCustomer(c);
-  }
+  for(let c of customers){ c.purchases=[]; c.payments=[]; c.pending=[]; await saveCustomer(c); }
   render();
 }
 
-// Utilities
-function now() { return new Date().toLocaleString(); }
-function server() { return document.getElementById("serverName").value.trim() || "Unknown"; }
-function subtotal(p) { return p.price * (p.qty || 1); }
-function totalPurchases(c) { return c.purchases.reduce((s,p)=>s+subtotal(p),0); }
-function totalPayments(c) { return c.payments.reduce((s,p)=>s+p.amount,0); }
-function balance(c) { return totalPurchases(c) - totalPayments(c); }
+function now(){ return new Date().toLocaleString(); }
+function server(){ return document.getElementById("serverName").value.trim()||"Unknown"; }
+function subtotal(p){ return p.price*(p.qty||1); }
+function totalPurchases(c){ return c.purchases.reduce((s,p)=>s+subtotal(p),0); }
+function totalPayments(c){ return c.payments.reduce((s,p)=>s+p.amount,0); }
+function balance(c){ return totalPurchases(c)-totalPayments(c); }
 
-// Customer Functions
-async function addCustomer() {
+async function addCustomer(){
   const name = document.getElementById("newName").value.trim();
-  if (!name) return alert("Enter a name!");
-  const id = "c" + Date.now();
-  const cust = {id, name, purchases:[], payments:[], pending:[]};
-  await saveCustomer(cust);
+  if(!name) return alert("Enter a name!");
+  const id="c"+Date.now();
+  await saveCustomer({id,name,purchases:[],payments:[],pending:[]});
   document.getElementById("newName").value="";
   render();
 }
 
-async function deleteCustomer(id) {
-  if (!confirm("Delete this customer and all records?")) return;
+async function deleteCustomer(id){
+  if(!confirm("Delete this customer and all records?")) return;
   await deleteCustomerDB(id);
   render();
 }
 
-async function clearBalance(id) {
+async function clearBalance(id){
   const customers = await getAllCustomers();
   const c = customers.find(c=>c.id===id);
-  if (!c) return;
-  c.purchases=[];
-  c.payments=[];
-  c.pending=[];
+  if(!c) return;
+  c.purchases=[]; c.payments=[]; c.pending=[];
   await saveCustomer(c);
   render();
 }
 
-// Orders & Payments
-async function addPending(id, price, title="Item") {
+async function addPending(id,price,title="Item"){
   const customers = await getAllCustomers();
   const c = customers.find(c=>c.id===id);
-  if (!c) return;
-  c.pending.push({title, price, qty:1, date:now(), server:server()});
+  if(!c) return;
+  c.pending.push({title,price,qty:1,date:now(),server:server()});
   await saveCustomer(c);
   render();
 }
@@ -105,7 +88,7 @@ async function addPending(id, price, title="Item") {
 async function confirmPending(id,index){
   const customers = await getAllCustomers();
   const c = customers.find(c=>c.id===id);
-  if (!c) return;
+  if(!c) return;
   c.purchases.push(c.pending.splice(index,1)[0]);
   await saveCustomer(c);
   render();
@@ -114,7 +97,7 @@ async function confirmPending(id,index){
 async function confirmAllPending(id){
   const customers = await getAllCustomers();
   const c = customers.find(c=>c.id===id);
-  if (!c) return;
+  if(!c) return;
   c.purchases.push(...c.pending);
   c.pending=[];
   await saveCustomer(c);
@@ -124,7 +107,7 @@ async function confirmAllPending(id){
 async function cancelPending(id,index){
   const customers = await getAllCustomers();
   const c = customers.find(c=>c.id===id);
-  if (!c) return;
+  if(!c) return;
   c.pending.splice(index,1);
   await saveCustomer(c);
   render();
@@ -132,44 +115,43 @@ async function cancelPending(id,index){
 
 async function addCustomPurchase(id){
   const amt = parseFloat(prompt("Price?","10"));
-  if (isNaN(amt)) return;
+  if(isNaN(amt)) return;
   const qty = parseInt(prompt("Quantity?","1"));
   const customers = await getAllCustomers();
   const c = customers.find(c=>c.id===id);
-  if (!c) return;
-  c.pending.push({title:"Custom", price:amt, qty, date:now(), server:server()});
+  if(!c) return;
+  c.pending.push({title:"Custom",price:amt,qty,date:now(),server:server()});
   await saveCustomer(c);
   render();
 }
 
 async function addPayment(id){
-  const amt = parseFloat(prompt("Payment amount:","10"));
-  if (isNaN(amt)||amt<=0) return;
+  const amt=parseFloat(prompt("Payment amount:","10"));
+  if(isNaN(amt)||amt<=0) return;
   const customers = await getAllCustomers();
   const c = customers.find(c=>c.id===id);
-  if (!c) return;
-  c.payments.push({amount:amt, date:now(), server:server()});
+  if(!c) return;
+  c.payments.push({amount:amt,date:now(),server:server()});
   await saveCustomer(c);
   render();
 }
 
-// Statements
 function toggleStatement(id){
-  const el = document.getElementById("statement-"+id);
-  if(el) el.style.display = el.style.display==="none"?"block":"none";
+  const el=document.getElementById("statement-"+id);
+  if(el) el.style.display=el.style.display==="none"?"block":"none";
 }
 
 async function showAllStatements(){
-  const div = document.getElementById("allStatements");
-  div.style.display = div.style.display==="none"?"block":"none";
+  const div=document.getElementById("allStatements");
+  div.style.display=div.style.display==="none"?"block":"none";
   if(div.style.display==="none") return;
   div.innerHTML="<h2>📑 All Accounts Statement</h2>";
-  const customers = await getAllCustomers();
+  const customers=await getAllCustomers();
   customers.forEach(c=>{
-    const bal = balance(c);
-    const balText = bal<0?`In Credit: $${Math.abs(bal).toFixed(2)}`:`Owing: $${bal.toFixed(2)}`;
-    let purchases = c.purchases.map(p=>`<li>${p.title} ×${p.qty} — $${subtotal(p).toFixed(2)} (${p.date}, ${p.server})</li>`).join('')||"<li>None</li>";
-    let payments = c.payments.map(p=>`<li>Payment — $${p.amount.toFixed(2)} (${p.date}, ${p.server})</li>`).join('')||"<li>None</li>";
+    const bal=balance(c);
+    const balText=bal<0?`In Credit: $${Math.abs(bal).toFixed(2)}`:`Owing: $${bal.toFixed(2)}`;
+    let purchases=c.purchases.map(p=>`<li>${p.title} ×${p.qty} — $${subtotal(p).toFixed(2)} (${p.date}, ${p.server})</li>`).join('')||"<li>None</li>";
+    let payments=c.payments.map(p=>`<li>Payment — $${p.amount.toFixed(2)} (${p.date}, ${p.server})</li>`).join('')||"<li>None</li>";
     div.innerHTML+=`<div style="margin:1em 0;padding:1em;border:1px solid #444;border-radius:6px;">
       <strong>${c.name}</strong><br>Purchases: $${totalPurchases(c).toFixed(2)}<br>Payments: $${totalPayments(c).toFixed(2)}<br>
       <strong>${balText}</strong>
@@ -179,28 +161,26 @@ async function showAllStatements(){
   });
 }
 
-// Render
 async function render(){
-  const div = document.getElementById("customers");
+  const div=document.getElementById("customers");
   div.innerHTML="";
-  const search = document.getElementById("searchBox").value.toLowerCase();
-  const customers = (await getAllCustomers()).filter(c=>c.name.toLowerCase().includes(search));
-
+  const search=document.getElementById("searchBox").value.toLowerCase();
+  const customers=(await getAllCustomers()).filter(c=>c.name.toLowerCase().includes(search));
   customers.forEach(c=>{
-    const el = document.createElement("div");
+    const el=document.createElement("div");
     el.className="customer";
-    const bal = balance(c);
-    const balClass = bal<0?"credit":(bal>0?"debt":"");
-    const balText = bal<0?`In Credit: $${Math.abs(bal).toFixed(2)}`:`Owing: $${bal.toFixed(2)}`;
+    const bal=balance(c);
+    const balClass=bal<0?"credit":(bal>0?"debt":"");
+    const balText=bal<0?`In Credit: $${Math.abs(bal).toFixed(2)}`:`Owing: $${bal.toFixed(2)}`;
 
-    let pendingList = c.pending.map((p,i)=>`
+    let pendingList=c.pending.map((p,i)=>`
       <li>${p.title} ×${p.qty} — $${subtotal(p).toFixed(2)} (${p.date}, ${p.server})
       <button onclick="confirmPending('${c.id}',${i})">✔️</button>
       <button onclick="cancelPending('${c.id}',${i})">❌</button>
       </li>`).join("")||"<li>None</li>";
 
-    let purchaseList = c.purchases.map(p=>`<li>${p.title} ×${p.qty} — $${subtotal(p).toFixed(2)} (${p.date}, ${p.server})</li>`).join("")||"<li>None</li>";
-    let paymentList = c.payments.map(p=>`<li>Payment — $${p.amount.toFixed(2)} (${p.date}, ${p.server})</li>`).join("")||"<li>None</li>";
+    let purchaseList=c.purchases.map(p=>`<li>${p.title} ×${p.qty} — $${subtotal(p).toFixed(2)} (${p.date}, ${p.server})</li>`).join("")||"<li>None</li>";
+    let paymentList=c.payments.map(p=>`<li>Payment — $${p.amount.toFixed(2)} (${p.date}, ${p.server})</li>`).join("")||"<li>None</li>";
 
     el.innerHTML=`
       <div><strong>${c.name}</strong></div>
@@ -234,10 +214,9 @@ async function render(){
   });
 }
 
-// Print
 function printStatement(){
-  const allContent = document.getElementById("customers").innerHTML;
-  const win = window.open('','', 'width=800,height=600');
+  const allContent=document.getElementById("customers").innerHTML;
+  const win=window.open('','','width=800,height=600');
   win.document.write(`<html><head><title>Bar Tab Statement</title>
     <style>body{font-family:Arial;padding:1em;background:#fff;color:#000;}
     h1{text-align:center;} .customer{border:1px solid #444;margin:1em 0;padding:1em;border-radius:6px;}</style>
@@ -247,7 +226,7 @@ function printStatement(){
 }
 
 // Initialize
-window.onload = async ()=>{
+window.onload=async ()=>{
   await openDB();
   render();
   document.getElementById("addCustomerBtn").addEventListener("click", addCustomer);
