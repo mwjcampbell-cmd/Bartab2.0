@@ -34,6 +34,12 @@ async function addCustomer() {
   document.getElementById("newName").value = "";
 }
 
+async function deleteCustomer(cid) {
+  if (!confirm("Delete this customer and all records?")) return;
+  const tx = db.transaction("customers", "readwrite");
+  tx.objectStore("customers").delete(cid).onsuccess = render;
+}
+
 async function addPending(cid, price, title) {
   const tx = db.transaction("customers", "readwrite");
   const store = tx.objectStore("customers");
@@ -159,6 +165,7 @@ async function render() {
             <button onclick="addPending(${c.id},2,'Soft Drink')">🧃 Soft $2</button>
             <button onclick="addCustomPurchase(${c.id})">➕ Custom</button>
             <button onclick="addPayment(${c.id})">💵 Payment</button>
+            <button onclick="deleteCustomer(${c.id})">🗑️ Delete</button>
           </div>
 
           <button onclick="toggleStatement(${c.id})">📄 Statement</button>
@@ -201,6 +208,10 @@ function printStatement() {
 // --- Update Check ---
 async function checkForUpdates() {
   try {
+    if (location.protocol === "file:") {
+      alert("Update check unavailable on local files. Use a local server.");
+      return;
+    }
     const res = await fetch("version.json?v=" + Date.now());
     if (!res.ok) throw new Error("Unable to fetch version");
     const json = await res.json();
